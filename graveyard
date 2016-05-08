@@ -1,0 +1,129 @@
+
+****Graveyard****
+
+May these lines of code rest in peace. 
+                                           .""--.._
+                                           []Syntax`'--.._
+                                           ||__    Terror  `'-,
+                                         `)||_ ```'--..       \
+                     _                    /|//}        ``--._  |
+                  .'` `'.                /////}              `\/
+                 /  .""".\              //{///    
+                /  /_  _`\\            // `||
+                | |(#)(#)||          _//   ||
+                | |  /\  )|        _///\   ||
+                | |L====J |       / |/ |   ||
+               /  /'-..-' /    .'`  \  |   ||
+              /   |  :: | |_.-`      |  \  ||
+             /|   `\-::.| |          \   | ||
+           /` `|   /    | |          |   / ||
+         |`    \   |    / /          \  |  ||
+        |       `\_|    |/      ,.__. \ |  ||
+        /                     /`    `\ ||  ||
+       |           .         /        \||  ||
+       |                     |         |/  ||
+       /         /           |         (   ||
+      /          .           /          )  ||
+     |            \          |             ||
+    /             |          /             ||
+   |\            /          |              ||
+   \ `-._       |           /              ||
+    \ ,//`\    /`           |              ||
+     ///\  \  |             \              ||
+    |||| ) |__/             |              ||
+    |||| `.(                |              ||
+    `\\` /`                 /              ||
+       /`                   /              ||
+      /                     |              ||
+     |                      \              ||
+    /                        |             ||
+  /`                          \            ||
+/`                            |            ||
+`-.___,-.      .-.        ___,'            ||
+         `---'`   `'----'`
+         
+         
+		if (true){
+			return;
+		}
+		
+		// Find defects on hand
+		MatOfInt4 matDefects = new MatOfInt4();
+		Imgproc.convexityDefects(hand, hull, matDefects);
+		
+		List<Integer> rawDefects = matDefects.toList();
+		List<Integer> defects = new ArrayList<Integer>();
+		for (int i = 2; i < rawDefects.size(); i+=4){
+			defects.add(rawDefects.get(i));
+		}
+
+		List<FingerDefect> fingerDefects = new ArrayList<FingerDefect>();
+		for (int j = 0; j < defects.size(); j++) {
+			
+			Point p = hand.toList().get(defects.get(j));
+			
+			if (p.y > cog.y+10){
+				continue;
+			}
+			
+			Imgproc.circle(clean, p, 5, new Scalar(255, 0, 0), 5);
+			
+			//Imgproc.putText(clean, defects.get(j) + "", p, 0, 0.6, new Scalar(0, 255, 0));
+			Integer left = hullNeighbor(defects.get(j), hull, true);
+			Integer right = hullNeighbor(defects.get(j), hull, false);
+			if (left != null && right != null) {
+				Point leftPoint = hand.toList().get(left);
+				Point rightPoint = hand.toList().get(right);
+
+				double angle = angleBetween(leftPoint, p, rightPoint);
+				
+				Imgproc.line(clean, p, leftPoint, new Scalar(0, 0, 255));
+				Imgproc.line(clean, p, rightPoint, new Scalar(0, 255, 0));
+				
+				if (angle < -20 && angle > -100) {
+					//System.out.println("Drawing: " + defects.get(j));
+					//System.out.println("Left: " + left);
+					//System.out.println("Right: " + right);
+
+					
+
+					fingerDefects.add(new FingerDefect(leftPoint, rightPoint, p));
+				}
+			}
+		}
+		
+		
+		
+		if (true){
+			return;
+		}
+
+		Collections.sort(fingerDefects);
+		List<Point> fingers = new ArrayList<Point>();
+		for (int i = 0; i < fingerDefects.size(); i++) {
+			FingerDefect d = fingerDefects.get(i);
+			if (i == 0) {
+				fingers.add(d.left);
+			}
+
+			if (i == fingerDefects.size() - 1) {
+				fingers.add(d.right);
+			} else {
+				FingerDefect next = fingerDefects.get(i + 1);
+				Point avg = mid(d.right, next.left);
+				fingers.add(avg);
+			}
+		}
+
+		// Imgproc.cvtColor(mat, mat, Imgproc);
+		
+
+		System.out.println("-");
+
+		for (Point p : fingers) {
+			Imgproc.circle(clean, p, 5, new Scalar(0, 255, 255), 2);
+		}
+
+		for (Point p : hullPoints) {
+			Imgproc.circle(clean, p, 5, new Scalar(0, 0, 255), 1);
+		}
