@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
@@ -20,7 +21,9 @@ public class Main {
 
 	private static final int VIDEO_WIDTH = 640;
 	private static final int VIDEO_HEIGHT = 360;
-
+	
+	private PrintWriter out;
+	
 	public static void main(String[] args) throws Exception {
 		Main m = new Main();
 	}
@@ -29,11 +32,13 @@ public class Main {
 	HandProfile p;
 	Server s;
 	
-	Main() throws InterruptedException, FileNotFoundException, URISyntaxException, UnknownHostException {
+	Main() throws Exception {
 		
-		s = new Server(8888);
-		s.start();
-		System.out.println( "ChatServer started on port: " + s.getPort() );
+		
+		Socket echoSocket = new Socket("172.16.98.47", 1999);
+	    out =
+	        new PrintWriter(echoSocket.getOutputStream(), true);
+	    
 		
 		
 		System.loadLibrary(Core.NATIVE_LIBRARY_NAME + "");
@@ -119,7 +124,7 @@ public class Main {
 		Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2HSV);
 		
 		profileRoi = new Mat(mat.clone(), r);
-		Imgproc.medianBlur(mat, mat, 5);
+		//Imgproc.medianBlur(mat, mat, 5);
 		Imgproc.rectangle(mat, r.tl(), r.br(), new Scalar(0, 255, 0), 2);
 		
 		if (p == null){
@@ -128,7 +133,9 @@ public class Main {
 		}
 		
 		Mat segmented =  Segmenter.segment(clean, p);
-		
+//		if (true){
+//			return segmented;
+//		}
 		//return segmented;
 		Hand h = new Hand(segmented, clean);
 		//String info = h.cog + " " + (h.fist ? "true": "false") + " " + h.fingers.size();
@@ -136,11 +143,14 @@ public class Main {
 		
 		//s.sendToAll(info);
 		
-		int xMovement =  (int) ((h.cog.x / segmented.width() - 0.5)*10.0);
+		int xMovement =  (int) ((h.cog.x / segmented.width() - 0.5)*30.0);
 		int yMovement =  (int) ((h.cog.y / segmented.height() - 0.5)*10.0);
 		int fingers = h.fingers.size();
-		System.out.printf("%d, %d, %d, %d, %d, %d, %d, %d, %d\n", xMovement, yMovement, 0, 0, 0, fingers, 0, 0, 0);
+		String output = String.format("%d, %d, %d, %d, %d, %d, %d, %d, %d\n", 0, 0, 0, 0, 0, fingers, 0, 0, 0);
 		
+		System.out.println(output);
+		out.println(output);
+		//s.sendToAll(text);
 		
 		return h.clean;
 	}

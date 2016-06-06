@@ -85,7 +85,9 @@ public class Hand {
 		
 		double dist = cog.y - minY;
 		////System.out.println(" Dist: " + dist);
-		if (dist < 140){
+		
+		System.out.println(dist);
+		if (dist < 150){
 			//System.out.println("FIST");
 			fist = true;
 			Imgproc.putText(clean, "FIST", new Point(50, 75), 0, 0.6, new Scalar(255, 0, 0), 2);
@@ -178,7 +180,7 @@ public class Hand {
 			return null;
 		}
 		
-		//System.out.println(Imgproc.contourArea(hand));
+		System.out.println(Imgproc.contourArea(hand));
 		
 		return hand;
 	}
